@@ -13,12 +13,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Landing Page Portal
+// Root Route: Redirect to dashboard if authenticated, or login page if guest
 Route::get('/', function () {
     if (Auth::check()) {
         return Auth::user()->isAdmin() ? redirect()->route('dashboard') : redirect()->route('kasir.index');
     }
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 // Dashboard Router
