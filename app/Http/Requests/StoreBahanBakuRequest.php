@@ -22,8 +22,10 @@ class StoreBahanBakuRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama_bahan' => ['required', 'string', 'max:255'],
-            'satuan' => ['required', 'in:gr,ml'],
+            'mode' => ['nullable', 'in:existing,new'],
+            'bahan_baku_id' => ['nullable', 'required_if:mode,existing', 'exists:bahan_baku,id'],
+            'nama_bahan' => ['nullable', 'required_if:mode,new', 'string', 'max:255'],
+            'satuan' => ['nullable', 'required_if:mode,new', 'in:gr,ml'],
             'jumlah' => ['required', 'numeric', 'min:0.01'],
             'harga_beli' => ['required', 'numeric', 'min:0'],
             'stok_minimum' => ['nullable', 'numeric', 'min:0'],
@@ -35,12 +37,14 @@ class StoreBahanBakuRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nama_bahan.required' => 'Nama bahan baku wajib diisi.',
-            'satuan.required' => 'Satuan bahan (gr atau ml) wajib dipilih.',
+            'bahan_baku_id.required_if' => 'Pilih bahan baku yang ingin di-restock.',
+            'bahan_baku_id.exists' => 'Bahan baku yang dipilih tidak valid.',
+            'nama_bahan.required_if' => 'Nama bahan baku baru wajib diisi.',
+            'satuan.required_if' => 'Satuan bahan (gr atau ml) wajib dipilih.',
             'jumlah.required' => 'Jumlah stok wajib diisi.',
             'jumlah.min' => 'Jumlah stok minimal 0.01.',
             'harga_beli.required' => 'Total harga beli wajib diisi.',
-            'harga_beli.min' => 'Total harga beli tidak boleh negatif.',
+            'harga_beli.min' => 'Total harga beli tidak boleh bernilai negatif.',
         ];
     }
 }

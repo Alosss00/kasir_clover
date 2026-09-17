@@ -26,34 +26,33 @@ class BahanBakuController extends Controller
 
         $bahanBaku = $query->orderBy('nama_bahan', 'asc')->paginate(10)->withQueryString();
 
+        // Seluruh daftar bahan untuk pilihan restock (utamakan yang stoknya menipis di atas)
+        $allBahanList = BahanBaku::orderByRaw('(stok_total <= stok_minimum) DESC, nama_bahan ASC')->get();
+
         // Agregasi SQL untuk kartu ringkasan
         $totalItem = BahanBaku::count();
         $totalNilaiInventaris = BahanBaku::selectRaw('SUM(stok_total * harga_per_satuan) as total_nilai')->value('total_nilai') ?? 0;
         $totalStokMenipis = BahanBaku::whereColumn('stok_total', '<=', 'stok_minimum')->count();
 
-        return view('bahan-baku.index', compact('bahanBaku', 'totalItem', 'totalNilaiInventaris', 'totalStokMenipis'));
+        return view('bahan-baku.index', compact('bahanBaku', 'allBahanList', 'totalItem', 'totalNilaiInventaris', 'totalStokMenipis'));
     }
 
     public function store(StoreBahanBakuRequest $request)
     {
         $validated = $request->validated();
 
-        DB::transaction(function () use ($validated) {
-            $namaBahan = trim($validated['nama_bahan']);
-            $satuan = $validated['satuan'];
+        DB::transaction(function () use ($validated, $request) {
+            $mode = $request->input('mode', 'existing');
             $jumlahBaru = (float) $validated['jumlah'];
             $hargaBeliBaru = (float) $validated['harga_beli'];
-            $stokMinimum = isset($validated['stok_minimum']) ? (float)$validated['stok_minimum'] : 100.00;
+            $stokMinimum = isset($validated['stok_minimum']) && $validated['stok_minimum'] !== '' ? (float)$validated['stok_minimum'] : null;
             $tanggal = $validated['tanggal'] ?? now()->toDateString();
             $keterangan = $validated['keterangan'] ?? 'Restock Stok Bahan';
 
-            // Cek apakah bahan baku sudah ada (case-insensitive)
-            $bahan = BahanBaku::whereRaw('LOWER(nama_bahan) = ?', [strtolower($namaBahan)])
-                              ->where('satuan', $satuan)
-                              ->first();
-
             $isNew = false;
-            if ($bahan) {
+            if ($mode === 'existing' && !empty($validated['bahan_baku_id'])) {
+                $bahan = BahanBaku::findOrFail($validated['bahan_baku_id']);
+
                 // Logika Akumulasi Stok & Weighted Average Cost (WAC)
                 $stokLama = (float) $bahan->stok_total;
                 $totalBeliLama = (float) $bahan->total_harga_beli;
@@ -62,24 +61,50 @@ class BahanBakuController extends Controller
                 $totalBeliBaru = $totalBeliLama + $hargaBeliBaru;
                 $hargaPerSatuanBaru = $stokBaru > 0 ? ($totalBeliBaru / $stokBaru) : 0;
 
-                $bahan->update([
+                $updateData = [
                     'stok_total' => $stokBaru,
                     'total_harga_beli' => $totalBeliBaru,
                     'harga_per_satuan' => round($hargaPerSatuanBaru, 4),
-                    'stok_minimum' => $stokMinimum,
-                ]);
+                ];
+                if ($stokMinimum !== null) {
+                    $updateData['stok_minimum'] = $stokMinimum;
+                }
+                $bahan->update($updateData);
             } else {
                 $isNew = true;
+                $namaBahan = trim($validated['nama_bahan']);
+                $satuan = $validated['satuan'];
                 $hargaPerSatuan = $jumlahBaru > 0 ? ($hargaBeliBaru / $jumlahBaru) : 0;
 
-                $bahan = BahanBaku::create([
-                    'nama_bahan' => $namaBahan,
-                    'satuan' => $satuan,
-                    'stok_total' => $jumlahBaru,
-                    'total_harga_beli' => $hargaBeliBaru,
-                    'harga_per_satuan' => round($hargaPerSatuan, 4),
-                    'stok_minimum' => $stokMinimum,
-                ]);
+                // Cek apakah bahan dengan nama & satuan yang sama sudah ada di database
+                $existing = BahanBaku::whereRaw('LOWER(nama_bahan) = ?', [strtolower($namaBahan)])
+                                     ->where('satuan', $satuan)
+                                     ->first();
+
+                if ($existing) {
+                    $bahan = $existing;
+                    $isNew = false;
+                    $stokLama = (float) $bahan->stok_total;
+                    $totalBeliLama = (float) $bahan->total_harga_beli;
+                    $stokBaru = $stokLama + $jumlahBaru;
+                    $totalBeliBaru = $totalBeliLama + $hargaBeliBaru;
+                    $hargaPerSatuanBaru = $stokBaru > 0 ? ($totalBeliBaru / $stokBaru) : 0;
+                    $bahan->update([
+                        'stok_total' => $stokBaru,
+                        'total_harga_beli' => $totalBeliBaru,
+                        'harga_per_satuan' => round($hargaPerSatuanBaru, 4),
+                        'stok_minimum' => $stokMinimum ?? $bahan->stok_minimum,
+                    ]);
+                } else {
+                    $bahan = BahanBaku::create([
+                        'nama_bahan' => $namaBahan,
+                        'satuan' => $satuan,
+                        'stok_total' => $jumlahBaru,
+                        'total_harga_beli' => $hargaBeliBaru,
+                        'harga_per_satuan' => round($hargaPerSatuan, 4),
+                        'stok_minimum' => $stokMinimum ?? 500.00,
+                    ]);
+                }
             }
 
             // Simpan audit trail di histori
@@ -118,7 +143,7 @@ class BahanBakuController extends Controller
 
     public function histori(BahanBaku $bahanBaku)
     {
-        $histori = $bahanBaku->histori()->paginate(15);
+        $histori = $bahanBaku->histori()->orderBy('tanggal', 'desc')->paginate(15);
         return view('bahan-baku.histori', compact('bahanBaku', 'histori'));
     }
 
