@@ -6,9 +6,9 @@
     <div>
         <!-- Logo & Nama Aplikasi -->
         <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-200 bg-white">
-            <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Logo" class="w-9 h-9 rounded-xl object-contain shadow-sm p-0.5 bg-slate-50 border border-slate-100">
+            <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Logo" class="w-9 h-9 aspect-square rounded-xl object-contain shadow-sm p-0.5 bg-slate-50 border border-slate-100 shrink-0">
             <div class="min-w-0">
-                <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-5 w-auto object-contain">
+                <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-5 w-auto aspect-[6250/2022] object-contain">
                 <p class="text-[10px] text-slate-500 font-semibold tracking-wide">POS & MANAGEMENT</p>
             </div>
         </div>

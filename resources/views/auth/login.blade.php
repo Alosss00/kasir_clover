@@ -11,12 +11,12 @@
                 <!-- Brand Header -->
                 <div class="relative z-10">
                     <div class="flex items-center gap-3.5 mb-6">
-                        <div class="w-13 h-13 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-xl shadow-emerald-950/50 flex items-center justify-center shrink-0">
-                            <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Emblem" class="w-10 h-10 object-contain">
+                        <div class="w-12 h-12 p-1 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-xl shadow-emerald-950/50 flex items-center justify-center shrink-0">
+                            <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Emblem" class="w-full h-full aspect-square object-contain">
                         </div>
                         <div>
-                            <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-6 w-auto object-contain brightness-110">
-                            <p class="text-[11px] text-emerald-400 font-semibold tracking-wider uppercase mt-0.5">POS & Cafe Management</p>
+                            <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-6 w-auto aspect-[6250/2022] object-contain brightness-110">
+                            <p class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase mt-0.5">POS & Cafe Management</p>
                         </div>
                     </div>
 
