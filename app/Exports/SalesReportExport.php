@@ -42,6 +42,7 @@ class SalesReportExport implements FromQuery, WithHeadings, WithMapping, ShouldA
         return [
             'Kode Transaksi',
             'Tanggal & Waktu',
+            'Nama Customer',
             'Nama Kasir',
             'Rincian Menu (Qty x Harga)',
             'Total Belanja (Rp)',
@@ -61,6 +62,7 @@ class SalesReportExport implements FromQuery, WithHeadings, WithMapping, ShouldA
         return [
             $transaksi->kode_transaksi,
             $transaksi->tanggal_transaksi->format('d/m/Y H:i:s'),
+            $transaksi->nama_customer ?? 'Pelanggan Umum',
             $transaksi->kasir->name ?? 'Kasir',
             $detailString,
             (float) $transaksi->total_harga,

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transaksi', function (Blueprint $table) {
             $table->id();
             $table->string('kode_transaksi')->unique();
+            $table->string('nama_customer')->nullable()->default('Pelanggan Umum');
             $table->foreignId('kasir_id')->constrained('users')->restrictOnDelete();
             $table->decimal('total_harga', 12, 2);
             $table->enum('metode_pembayaran', ['cash', 'debit_qris']);

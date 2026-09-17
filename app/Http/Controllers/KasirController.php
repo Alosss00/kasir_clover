@@ -45,6 +45,7 @@ class KasirController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.menu_id' => ['required', 'exists:menu,id'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
+            'nama_customer' => ['nullable', 'string', 'max:100'],
             'metode_pembayaran' => ['required', 'in:cash,debit_qris'],
             'jumlah_bayar' => ['nullable', 'numeric', 'min:0'],
             'catatan' => ['nullable', 'string', 'max:255'],
@@ -83,8 +84,11 @@ class KasirController extends Controller
 
             // 2. Simpan Header Transaksi
             $kodeTransaksi = Transaksi::generateKodeTransaksi();
+            $namaCustomer = !empty(trim($validated['nama_customer'] ?? '')) ? trim($validated['nama_customer']) : 'Pelanggan Umum';
+
             $trx = Transaksi::create([
                 'kode_transaksi' => $kodeTransaksi,
+                'nama_customer' => $namaCustomer,
                 'kasir_id' => Auth::id(),
                 'total_harga' => $totalHarga,
                 'metode_pembayaran' => $metode,

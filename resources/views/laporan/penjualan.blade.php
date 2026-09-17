@@ -186,6 +186,7 @@
                     <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                         <tr>
                             <th class="py-3 px-5">Kode & Waktu</th>
+                            <th class="py-3 px-4">Customer</th>
                             <th class="py-3 px-4">Kasir</th>
                             <th class="py-3 px-4">Menu Dipesan</th>
                             <th class="py-3 px-3 text-center">Metode</th>
@@ -199,7 +200,13 @@
                                     <div class="font-bold text-slate-900 text-xs">{{ $trx->kode_transaksi }}</div>
                                     <div class="text-[10px] text-slate-400">{{ $trx->tanggal_transaksi->translatedFormat('d M Y, H:i') }}</div>
                                 </td>
-                                <td class="py-3.5 px-4 font-semibold text-slate-800">
+                                <td class="py-3.5 px-4 font-bold text-emerald-800 text-xs">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span>👤</span>
+                                        <span>{{ $trx->nama_customer ?? 'Pelanggan Umum' }}</span>
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 font-medium text-slate-700">
                                     {{ $trx->kasir->name ?? 'Kasir' }}
                                 </td>
                                 <td class="py-3.5 px-4 text-xs">
@@ -223,7 +230,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-12 text-center text-slate-400">
+                                <td colspan="6" class="py-12 text-center text-slate-400">
                                     Tidak ada transaksi pada periode ini.
                                 </td>
                             </tr>

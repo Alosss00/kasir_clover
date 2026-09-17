@@ -92,6 +92,10 @@
         <span class="font-bold">{{ $transaksi->kode_transaksi }}</span>
     </div>
     <div class="meta-row">
+        <span>Customer:</span>
+        <span class="font-bold">{{ $transaksi->nama_customer ?? 'Pelanggan Umum' }}</span>
+    </div>
+    <div class="meta-row">
         <span>Tgl:</span>
         <span>{{ $transaksi->tanggal_transaksi->format('d/m/Y H:i') }}</span>
     </div>

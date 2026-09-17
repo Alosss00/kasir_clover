@@ -118,12 +118,13 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 15%;">Kode Trx</th>
-                <th style="width: 15%;">Tanggal</th>
-                <th style="width: 12%;">Kasir</th>
+                <th style="width: 13%;">Kode Trx</th>
+                <th style="width: 14%;">Tanggal</th>
+                <th style="width: 14%;">Customer</th>
+                <th style="width: 10%;">Kasir</th>
                 <th>Rincian Pesanan Menu</th>
-                <th style="width: 10%;" class="text-center">Metode</th>
-                <th style="width: 15%;" class="text-right">Total (Rp)</th>
+                <th style="width: 8%;" class="text-center">Metode</th>
+                <th style="width: 13%;" class="text-right">Total (Rp)</th>
             </tr>
         </thead>
         <tbody>
@@ -131,6 +132,7 @@
                 <tr>
                     <td><strong>{{ $trx->kode_transaksi }}</strong></td>
                     <td>{{ $trx->tanggal_transaksi->format('d/m/Y H:i') }}</td>
+                    <td><strong>{{ $trx->nama_customer ?? 'Pelanggan Umum' }}</strong></td>
                     <td>{{ $trx->kasir->name ?? 'Kasir' }}</td>
                     <td>
                         @foreach($trx->details as $d)
@@ -144,7 +146,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center" style="padding: 20px;">Tidak ada transaksi pada periode terpilih.</td>
+                    <td colspan="7" class="text-center" style="padding: 20px;">Tidak ada transaksi pada periode terpilih.</td>
                 </tr>
             @endforelse
         </tbody>
