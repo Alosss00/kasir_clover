@@ -5,15 +5,11 @@
 >
     <div>
         <!-- Logo & Nama Aplikasi -->
-        <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-200 bg-white">
-            <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm text-white font-black text-lg">
-                ☘
-            </div>
-            <div>
-                <h1 class="text-base font-bold text-slate-900 leading-tight">
-                    Kasir Clover
-                </h1>
-                <p class="text-[11px] text-slate-500 font-medium">POS & Stok Kafe</p>
+        <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-200 bg-white">
+            <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Logo" class="w-9 h-9 rounded-xl object-contain shadow-sm p-0.5 bg-slate-50 border border-slate-100">
+            <div class="min-w-0">
+                <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-5 w-auto object-contain">
+                <p class="text-[10px] text-slate-500 font-semibold tracking-wide">POS & MANAGEMENT</p>
             </div>
         </div>
 

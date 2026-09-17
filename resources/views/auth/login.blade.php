@@ -10,17 +10,13 @@
 
                 <!-- Brand Header -->
                 <div class="relative z-10">
-                    <div class="inline-flex items-center gap-3 mb-6">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-0.5 shadow-lg shadow-emerald-600/30 flex items-center justify-center">
-                            <div class="w-full h-full bg-slate-950/60 rounded-[14px] flex items-center justify-center text-white text-2xl">
-                                ☘️
-                            </div>
+                    <div class="flex items-center gap-3.5 mb-6">
+                        <div class="w-13 h-13 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-xl shadow-emerald-950/50 flex items-center justify-center shrink-0">
+                            <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Emblem" class="w-10 h-10 object-contain">
                         </div>
                         <div>
-                            <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                                Kasir Clover
-                            </h1>
-                            <p class="text-xs text-slate-400 font-medium">POS & Cafe Management System</p>
+                            <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-6 w-auto object-contain brightness-110">
+                            <p class="text-[11px] text-emerald-400 font-semibold tracking-wider uppercase mt-0.5">POS & Cafe Management</p>
                         </div>
                     </div>
 

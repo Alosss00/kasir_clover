@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Kasir Clover') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-clover-primary.png') }}">
 
     <!-- Google Fonts & Tailwind -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

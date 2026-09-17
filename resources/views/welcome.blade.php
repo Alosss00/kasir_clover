@@ -17,12 +17,10 @@
     <header class="bg-slate-900/80 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white font-bold text-xl shadow-sm">
-                    ☘️
-                </div>
+                <img src="{{ asset('images/logo-clover-primary.png') }}" alt="Clover Emblem" class="w-10 h-10 object-contain rounded-xl p-1 bg-slate-900 border border-slate-700">
                 <div>
-                    <h1 class="text-lg font-bold text-white leading-tight">Kasir Clover</h1>
-                    <p class="text-xs text-slate-400">Aplikasi Kasir & Inventaris Kafe</p>
+                    <img src="{{ asset('images/logo-clover-space.png') }}" alt="Clover Space" class="h-6 w-auto object-contain">
+                    <p class="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">POS & Inventaris Kafe</p>
                 </div>
             </div>
 
