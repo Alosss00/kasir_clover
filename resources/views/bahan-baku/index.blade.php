@@ -7,7 +7,8 @@
             </div>
             <div>
                 <button 
-                    @click="openRestockModal()"
+                    type="button"
+                    onclick="if(window.openBahanBakuModal) { window.openBahanBakuModal(); } else { window.dispatchEvent(new CustomEvent('open-modal', { detail: 'modal-tambah-bahan' })); }"
                     class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -89,12 +90,23 @@
                 this.showModal = true;
             },
 
+            init() {
+                window.openBahanBakuModal = (bahanId = null) => {
+                    this.openRestockModal(bahanId);
+                };
+            },
+
             applyPackagingHelper() {
                 this.jumlah = this.kemasanQty * this.kemasanIsi;
                 this.hargaBeli = this.kemasanQty * this.kemasanHarga;
             }
         }"
-        x-on:open-modal.window="if ($event.detail === 'modal-tambah-bahan') openRestockModal()"
+        x-on:open-modal.window="
+            const d = $event.detail;
+            if (d === 'modal-tambah-bahan' || (typeof d === 'object' && (d?.name === 'modal-tambah-bahan' || d?.detail === 'modal-tambah-bahan'))) {
+                openRestockModal(typeof d === 'object' ? d.bahanId : null);
+            }
+        "
     >
 
         <!-- 3 Kartu Ringkasan Stok -->
