@@ -103,6 +103,12 @@ class KasirController extends Controller
                 $menu = $row['menu'];
                 $qty = $row['qty'];
 
+                // Pastikan HPP / Cost per cup selalu terhitung dari komposisi resep terbaru
+                if ((float)$menu->cost_per_cup <= 0) {
+                    $menu->calculateCost();
+                    $menu->refresh();
+                }
+
                 TransaksiDetail::create([
                     'transaksi_id' => $trx->id,
                     'menu_id' => $menu->id,

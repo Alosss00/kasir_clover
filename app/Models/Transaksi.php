@@ -40,6 +40,26 @@ class Transaksi extends Model
         return $this->hasMany(TransaksiDetail::class, 'transaksi_id');
     }
 
+    public function getTotalHppAttribute(): float
+    {
+        return (float) $this->details->sum(function ($d) {
+            return (float) $d->cost_per_cup_snapshot * (int) $d->qty;
+        });
+    }
+
+    public function getTotalProfitAttribute(): float
+    {
+        return (float) $this->total_harga - $this->total_hpp;
+    }
+
+    public function getMarginPersenAttribute(): float
+    {
+        if ((float)$this->total_harga <= 0) {
+            return 0;
+        }
+        return round(($this->total_profit / (float)$this->total_harga) * 100, 1);
+    }
+
     public static function generateKodeTransaksi(): string
     {
         $todayPrefix = 'TRX-' . date('Ymd') . '-';

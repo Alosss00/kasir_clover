@@ -37,4 +37,32 @@ class TransaksiDetail extends Model
     {
         return $this->belongsTo(Menu::class, 'menu_id');
     }
+
+    public function getTotalHppAttribute(): float
+    {
+        $costPerCup = $this->menu && (float)$this->menu->cost_per_cup > 0 
+            ? (float)$this->menu->cost_per_cup 
+            : (float)$this->cost_per_cup_snapshot;
+        return $costPerCup * (int) $this->qty;
+    }
+
+    public function getCostPerCupEffectiveAttribute(): float
+    {
+        return $this->menu && (float)$this->menu->cost_per_cup > 0 
+            ? (float)$this->menu->cost_per_cup 
+            : (float)$this->cost_per_cup_snapshot;
+    }
+
+    public function getProfitAttribute(): float
+    {
+        return (float) $this->subtotal - $this->total_hpp;
+    }
+
+    public function getMarginPersenAttribute(): float
+    {
+        if ((float) $this->subtotal <= 0) {
+            return 0;
+        }
+        return round(($this->profit / (float) $this->subtotal) * 100, 1);
+    }
 }

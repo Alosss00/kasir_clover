@@ -45,7 +45,10 @@ class SalesReportExport implements FromQuery, WithHeadings, WithMapping, ShouldA
             'Nama Customer',
             'Nama Kasir',
             'Rincian Menu (Qty x Harga)',
-            'Total Belanja (Rp)',
+            'Omzet Penjualan (Rp)',
+            'Modal / HPP (Rp)',
+            'Keuntungan Bersih (Rp)',
+            'Margin (%)',
             'Metode Pembayaran',
             'Nominal Bayar (Rp)',
             'Kembalian (Rp)',
@@ -59,6 +62,10 @@ class SalesReportExport implements FromQuery, WithHeadings, WithMapping, ShouldA
             return "{$d->nama_menu_snapshot} ({$d->qty}x @ Rp " . number_format($d->harga_satuan_snapshot, 0, ',', '.') . ")";
         })->implode(', ');
 
+        $totalHpp = $transaksi->total_hpp;
+        $totalProfit = $transaksi->total_profit;
+        $margin = $transaksi->margin_persen;
+
         return [
             $transaksi->kode_transaksi,
             $transaksi->tanggal_transaksi->format('d/m/Y H:i:s'),
@@ -66,6 +73,9 @@ class SalesReportExport implements FromQuery, WithHeadings, WithMapping, ShouldA
             $transaksi->kasir->name ?? 'Kasir',
             $detailString,
             (float) $transaksi->total_harga,
+            (float) $totalHpp,
+            (float) $totalProfit,
+            $margin . '%',
             strtoupper($transaksi->metode_pembayaran),
             $transaksi->jumlah_bayar ? (float)$transaksi->jumlah_bayar : 'Non-Tunai',
             $transaksi->kembalian !== null ? (float)$transaksi->kembalian : 0,

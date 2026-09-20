@@ -19,8 +19,9 @@ class LaporanController extends Controller
 
         switch ($filterType) {
             case 'harian':
-                $startDate = $request->input('tanggal') ? Carbon::parse($request->input('tanggal'))->startOfDay() : $today->copy()->startOfDay();
-                $endDate = $startDate->copy()->endOfDay();
+                $targetDate = $request->input('tanggal') ? Carbon::parse($request->input('tanggal')) : $today;
+                $startDate = $targetDate->copy()->startOfDay();
+                $endDate = $targetDate->copy()->endOfDay();
                 break;
 
             case 'mingguan':
@@ -29,7 +30,7 @@ class LaporanController extends Controller
                 break;
 
             case 'tahunan':
-                $year = $request->input('tahun', date('Y'));
+                $year = (int) $request->input('tahun', date('Y'));
                 $startDate = Carbon::createFromDate($year, 1, 1)->startOfDay();
                 $endDate = Carbon::createFromDate($year, 12, 31)->endOfDay();
                 break;
@@ -41,45 +42,57 @@ class LaporanController extends Controller
 
             case 'bulanan':
             default:
-                $bulan = $request->input('bulan', date('m'));
-                $tahun = $request->input('tahun', date('Y'));
+                $bulan = (int) $request->input('bulan', date('m'));
+                $tahun = (int) $request->input('tahun', date('Y'));
                 $startDate = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
                 $endDate = $startDate->copy()->endOfMonth()->endOfDay();
                 break;
         }
 
-        // Agregasi SQL Database (Hindari penarikan seluruh baris ke memori PHP)
-        $baseQuery = Transaksi::whereBetween('tanggal_transaksi', [$startDate, $endDate]);
+        // 1. Ringkasan Keuntungan Multi-Periode Cepat (Harian, Mingguan, Bulanan, Tahunan)
+        $summaryHarian = $this->getPeriodMetrics($today->copy()->startOfDay(), $today->copy()->endOfDay());
+        $summaryMingguan = $this->getPeriodMetrics($today->copy()->subDays(6)->startOfDay(), $today->copy()->endOfDay());
+        $summaryBulanan = $this->getPeriodMetrics(Carbon::now()->startOfMonth()->startOfDay(), Carbon::now()->endOfMonth()->endOfDay());
+        $summaryTahunan = $this->getPeriodMetrics(Carbon::now()->startOfYear()->startOfDay(), Carbon::now()->endOfYear()->endOfDay());
 
-        $totalOmzet = (float) (clone $baseQuery)->sum('total_harga');
-        $totalTransaksi = (int) (clone $baseQuery)->count();
+        // 2. Metrik Keuangan Periode Terpilih (Filter Aktif)
+        $activeMetrics = $this->getPeriodMetrics($startDate, $endDate);
 
-        // Breakdown Metode Pembayaran
-        $cashOmzet = (float) (clone $baseQuery)->where('metode_pembayaran', 'cash')->sum('total_harga');
-        $cashCount = (int) (clone $baseQuery)->where('metode_pembayaran', 'cash')->count();
-
-        $debitOmzet = (float) (clone $baseQuery)->where('metode_pembayaran', 'debit_qris')->sum('total_harga');
-        $debitCount = (int) (clone $baseQuery)->where('metode_pembayaran', 'debit_qris')->count();
-
-        // Tren Penjualan Harian untuk Grafik / Bar Chart
-        $trendHarian = Transaksi::whereBetween('tanggal_transaksi', [$startDate, $endDate])
-            ->selectRaw('DATE(tanggal_transaksi) as date, SUM(total_harga) as total, COUNT(id) as count')
+        // 3. Tren Penjualan & Keuntungan Harian untuk Grafik / Tabel Tren
+        $trendHarian = DB::table('transaksi_detail')
+            ->join('transaksi', 'transaksi.id', '=', 'transaksi_detail.transaksi_id')
+            ->leftJoin('menu', 'menu.id', '=', 'transaksi_detail.menu_id')
+            ->whereBetween('transaksi.tanggal_transaksi', [$startDate, $endDate])
+            ->selectRaw('
+                DATE(transaksi.tanggal_transaksi) as date,
+                COUNT(DISTINCT transaksi.id) as count,
+                COALESCE(SUM(transaksi_detail.subtotal), 0) as total_omzet,
+                COALESCE(SUM(COALESCE(menu.cost_per_cup, transaksi_detail.cost_per_cup_snapshot, 0) * transaksi_detail.qty), 0) as total_hpp,
+                COALESCE(SUM(transaksi_detail.subtotal - (COALESCE(menu.cost_per_cup, transaksi_detail.cost_per_cup_snapshot, 0) * transaksi_detail.qty)), 0) as total_profit
+            ')
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
 
-        // Top 5 Menu Terlaris via Agregasi SQL Detail
-        $topMenus = TransaksiDetail::whereHas('transaksi', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('tanggal_transaksi', [$startDate, $endDate]);
-            })
-            ->selectRaw('nama_menu_snapshot, SUM(qty) as total_qty, SUM(subtotal) as total_omzet')
-            ->groupBy('nama_menu_snapshot')
+        // 4. Top 5 Menu Terlaris & Profit Maker via Agregasi SQL Detail
+        $topMenus = DB::table('transaksi_detail')
+            ->join('transaksi', 'transaksi.id', '=', 'transaksi_detail.transaksi_id')
+            ->leftJoin('menu', 'menu.id', '=', 'transaksi_detail.menu_id')
+            ->whereBetween('transaksi.tanggal_transaksi', [$startDate, $endDate])
+            ->selectRaw('
+                transaksi_detail.nama_menu_snapshot,
+                SUM(transaksi_detail.qty) as total_qty,
+                SUM(transaksi_detail.subtotal) as total_omzet,
+                SUM(COALESCE(menu.cost_per_cup, transaksi_detail.cost_per_cup_snapshot, 0) * transaksi_detail.qty) as total_hpp,
+                SUM(transaksi_detail.subtotal - (COALESCE(menu.cost_per_cup, transaksi_detail.cost_per_cup_snapshot, 0) * transaksi_detail.qty)) as total_profit
+            ')
+            ->groupBy('transaksi_detail.nama_menu_snapshot')
             ->orderByDesc('total_qty')
             ->take(5)
             ->get();
 
-        // Transaksi List dengan Pagination & Eager Loading (Cegah N+1)
-        $transaksiList = Transaksi::with(['kasir', 'details'])
+        // 5. Transaksi List dengan Pagination & Eager Loading (Cegah N+1)
+        $transaksiList = Transaksi::with(['kasir', 'details.menu'])
             ->whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->orderBy('tanggal_transaksi', 'desc')
             ->paginate(15)
@@ -89,16 +102,60 @@ class LaporanController extends Controller
             'filterType',
             'startDate',
             'endDate',
-            'totalOmzet',
-            'totalTransaksi',
-            'cashOmzet',
-            'cashCount',
-            'debitOmzet',
-            'debitCount',
+            'summaryHarian',
+            'summaryMingguan',
+            'summaryBulanan',
+            'summaryTahunan',
+            'activeMetrics',
             'trendHarian',
             'topMenus',
             'transaksiList'
         ));
+    }
+
+    /**
+     * Helper untuk menghitung metrik finansial (Omzet, HPP, Keuntungan, Margin, Metode Bayar)
+     */
+    private function getPeriodMetrics(Carbon $startDate, Carbon $endDate): array
+    {
+        $detailStats = DB::table('transaksi_detail')
+            ->join('transaksi', 'transaksi.id', '=', 'transaksi_detail.transaksi_id')
+            ->leftJoin('menu', 'menu.id', '=', 'transaksi_detail.menu_id')
+            ->whereBetween('transaksi.tanggal_transaksi', [$startDate, $endDate])
+            ->selectRaw('
+                COALESCE(SUM(transaksi_detail.subtotal), 0) as total_omzet,
+                COALESCE(SUM(COALESCE(menu.cost_per_cup, transaksi_detail.cost_per_cup_snapshot, 0) * transaksi_detail.qty), 0) as total_hpp,
+                COALESCE(SUM(transaksi_detail.subtotal - (COALESCE(menu.cost_per_cup, transaksi_detail.cost_per_cup_snapshot, 0) * transaksi_detail.qty)), 0) as total_profit,
+                COALESCE(SUM(transaksi_detail.qty), 0) as total_qty
+            ')->first();
+
+        $trxStats = DB::table('transaksi')
+            ->whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->selectRaw('
+                COUNT(id) as total_transaksi,
+                COALESCE(SUM(CASE WHEN metode_pembayaran = "cash" THEN total_harga ELSE 0 END), 0) as cash_omzet,
+                COALESCE(SUM(CASE WHEN metode_pembayaran = "cash" THEN 1 ELSE 0 END), 0) as cash_count,
+                COALESCE(SUM(CASE WHEN metode_pembayaran = "debit_qris" THEN total_harga ELSE 0 END), 0) as debit_omzet,
+                COALESCE(SUM(CASE WHEN metode_pembayaran = "debit_qris" THEN 1 ELSE 0 END), 0) as debit_count
+            ')->first();
+
+        $omzet = (float) ($detailStats->total_omzet ?? 0);
+        $hpp = (float) ($detailStats->total_hpp ?? 0);
+        $profit = (float) ($detailStats->total_profit ?? 0);
+        $margin = $omzet > 0 ? round(($profit / $omzet) * 100, 1) : 0;
+
+        return [
+            'omzet' => $omzet,
+            'hpp' => $hpp,
+            'profit' => $profit,
+            'margin' => $margin,
+            'total_transaksi' => (int) ($trxStats->total_transaksi ?? 0),
+            'total_cup' => (int) ($detailStats->total_qty ?? 0),
+            'cash_omzet' => (float) ($trxStats->cash_omzet ?? 0),
+            'cash_count' => (int) ($trxStats->cash_count ?? 0),
+            'debit_omzet' => (float) ($trxStats->debit_omzet ?? 0),
+            'debit_count' => (int) ($trxStats->debit_count ?? 0),
+        ];
     }
 
     public function exportExcel(Request $request)
@@ -107,7 +164,7 @@ class LaporanController extends Controller
         $endDate = $request->input('end_date', now()->toDateString());
         $metode = $request->input('metode');
 
-        $fileName = "laporan-penjualan-{$startDate}_sd_{$endDate}.xlsx";
+        $fileName = "laporan-penjualan-profit-{$startDate}_sd_{$endDate}.xlsx";
 
         return Excel::download(new SalesReportExport($startDate, $endDate, $metode), $fileName);
     }
@@ -117,27 +174,21 @@ class LaporanController extends Controller
         $startDate = Carbon::parse($request->input('start_date', now()->startOfMonth()->toDateString()))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date', now()->toDateString()))->endOfDay();
 
+        $metrics = $this->getPeriodMetrics($startDate, $endDate);
+
         $transaksiList = Transaksi::with(['kasir', 'details'])
             ->whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->orderBy('tanggal_transaksi', 'asc')
             ->get();
 
-        $totalOmzet = $transaksiList->sum('total_harga');
-        $totalTransaksi = $transaksiList->count();
-        $cashOmzet = $transaksiList->where('metode_pembayaran', 'cash')->sum('total_harga');
-        $debitOmzet = $transaksiList->where('metode_pembayaran', 'debit_qris')->sum('total_harga');
-
         $pdf = Pdf::loadView('laporan.pdf', compact(
             'transaksiList',
             'startDate',
             'endDate',
-            'totalOmzet',
-            'totalTransaksi',
-            'cashOmzet',
-            'debitOmzet'
+            'metrics'
         ))->setPaper('a4', 'portrait');
 
-        $fileName = "laporan-penjualan-{$startDate->format('Y-m-d')}_sd_{$endDate->format('Y-m-d')}.pdf";
+        $fileName = "laporan-penjualan-profit-{$startDate->format('Y-m-d')}_sd_{$endDate->format('Y-m-d')}.pdf";
         return $pdf->download($fileName);
     }
 }
