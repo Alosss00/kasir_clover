@@ -8,11 +8,10 @@
     <title>{{ config('app.name', 'Kasir Clover') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo-clover-primary.png') }}">
 
-    <!-- Google Fonts & Tailwind -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Local Fonts & Tailwind (Offline Ready) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/plus-jakarta-sans.css') }}">
+    <script src="{{ asset('vendor/tailwind/tailwind.js') }}"></script>
+    <script src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }

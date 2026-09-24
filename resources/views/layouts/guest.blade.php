@@ -8,13 +8,11 @@
     <title>{{ config('app.name', 'Kasir Clover') }} — Masuk Aplikasi POS</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo-clover-primary.png') }}">
 
-    <!-- Google Fonts & Tailwind -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Local Fonts & Tailwind (Offline Ready) -->
+    <link rel="stylesheet" href="{{ asset('vendor/fonts/plus-jakarta-sans.css') }}">
+    <script src="{{ asset('vendor/tailwind/tailwind.js') }}"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="{{ asset('vendor/lucide/lucide.min.js') }}"></script>
 
     <script>
         tailwind.config = {

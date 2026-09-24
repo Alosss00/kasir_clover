@@ -83,8 +83,8 @@
         </div>
     </div>
 
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js (Offline Ready) -->
+    <script src="{{ asset('vendor/chartjs/chart.umd.js') }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const chartData = @json($chartData);
